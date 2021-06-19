@@ -1,16 +1,12 @@
 #pragma once
 
-namespace adaptX {
+namespace lib {
 
-template <class Type>
+template <typename Type>
 class Array
 {
 public:
-	Array()
-		: length(0)
-	{
-		_array = (Type*)malloc(length * sizeof(Type));
-	}
+	Array();
 
 public:
 	void push(const Type& value)
@@ -106,4 +102,4 @@ private:
 	};
 };
 
-} // namespace adaptX
+} // namespace lib

@@ -1,5 +1,9 @@
 #pragma once
 
+#include <string>
+#include <vector>
+#include <map>
+
 class JSONObject
 {    
 public:
@@ -12,8 +16,8 @@ private:
      * @param   data    the data between the square brackets
      * @return          an ArrayList of all of the data in the array
      **/
-	ArrayList<Object> parseArray(String data) {
-        ArrayList<Object> result;
+	std::vector<Object> parseArray(std::string& data) {
+        std::vector<Object> result;
 
         // Arrays for storing characters to look for
         char openChars[] = { '{', '[' };
@@ -25,7 +29,7 @@ private:
         int values[] = { 0 };
 
         // Content of a certain data type
-        String currentContent = "";
+        std::string currentContent = "";
         // Initial type is NONE, the equivalent of null in this parser
         Types currentType = Types.NONE;
         // Declare i outside of for loop so we can use it later on
@@ -34,21 +38,22 @@ private:
         for (; i < data.length(); ++i)
 		{
             // Get current character
-            char thisChar = data.charAt(i);
+            char thisChar = data[i];
             if (thisChar == '\\')
 			{
                 // Escape codes
                 // - Currently only supports \n, \t, \\, and escaping single characters
                 ++i;
 
-                if (data.charAt(i) == 'n')
+                if (data[i] == 'n')
 					currentContent += "\n";
-                else if (data.charAt(i) == 't')
+                else if (data[i] == 't')
 					currentContent += "\t";
-                else if (data.charAt(i) == '\\')
+                else if (data[i] == '\\')
 					currentContent += "\\";
                 else
-                    currentContent += data.substring(i, i+1);
+                    currentContent += data.substr(i, 1);
+					// in Java, that would be: data.substring(i, i + 1)
             }
 			else if (includes(openAndClose, thisChar))
 			{
@@ -86,22 +91,26 @@ private:
                 // If in quotes
                 currentContent += data.substring(i, i+1);
             }
-			else if (includes(openChars,thisChar))
-			{
+			else if (includes(openChars, thisChar)) {
                 // If opening bracket
-                if(allZero(depths)) {
+                if (allZero(depths)) {
                     // Start if not in another array/object
-                    if(thisChar == '{') currentType = Types.OBJECT;
-                    if(thisChar == '[') currentType = Types.ARRAY;
+                    if (thisChar == '{')
+						currentType = Types::OBJECT;
+                    else if (thisChar == '[')
+						currentType = Types::ARRAY;
+
                     currentContent = "";
-                } else {
+                }
+				else {
                     // Otherwise, just add to content
                     currentContent += data.substring(i, i+1);
                 }
 
                 // Increment depths as we go deeper into data
                 depths[getIndex(openChars, thisChar)]++;
-            } else if (includes(closeChars,thisChar)) {
+            }
+			else if (includes(closeChars,thisChar)) {
                 // Closing bracket
                 
                 // Going out of deeper part of data
@@ -109,19 +118,20 @@ private:
 
                 if(allZero(depths)) {                    
                     // Add data to results
-                    result.add(new JSONObject(currentContent.trim(),
-                            currentType));
+                    result.push_back(JSONObject(currentContent.trim(), currentType));
                     currentType = Types.NONE;
                     currentContent = "";
                 } else {
                     currentContent += data.substring(i, i+1);
                 }
-            } else if (!allZero(depths)) {
+            }
+			else if (!allZero(depths)) {
                 // If in object or array
-                currentContent += data.substring(i, i+1);
-            } else if (thisChar == ',') {
+                currentContent += data.substr(i, 1);
+            }
+			else if (thisChar == ',') {
                 // If at a comma
-                if(!(currentContent.trim().length() > 0)) {
+                if (!(currentContent.trim().length() > 0)) {
                     // If nothing, do nothing
                     continue;
                 }
@@ -160,21 +170,26 @@ private:
             }
         }
         // Process last item in array
-        if(currentContent.trim().length() > 0) {
+        if (currentContent.trim().length() > 0) {
             currentContent = currentContent.trim();
             if(currentContent.equals("true")) {
                 result.add(true);
-            } else if(currentContent.equals("false")) {
+            }
+			else if(currentContent.equals("false")) {
                 result.add(false);
-            } else if(currentContent.equals("null")) {
+            }
+			else if(currentContent.equals("null")) {
                 result.add(null);
-            } else {
+            }
+			else {
                 try {
                     result.add((int)Integer.parseInt(currentContent));
-                } catch (Exception e) {
+                }
+				catch (Exception e) {
                     try {
                         result.add((double)Double.parseDouble(currentContent));
-                    } catch (Exception err) {
+                    }
+					catch (Exception err) {
                         System.out.println("Warning: Unknown type");
                         System.out.println(currentContent);
                     }
@@ -192,76 +207,93 @@ private:
      * @param   data    the data between the curly brackets
      * @return          a HashMap of all of the data in the object
      **/
-    private HashMap<String, Object> parseObj(String data) {
+    std::map<std::string, Object> parseObj(std::string& data) {
         /*
          * Almost everything is the same as parseArray, so I am not going to
          * re-document everything here.
          */
         
         // HashMap instead of ArrayList
-        HashMap<String, Object> result = new HashMap<String, Object>();
+        std::map<std::string, Object> result;
 
-        char[] openChars = {'{', '['};
-        char[] closeChars = {'}', ']'};
-        char[] openAndClose = {'"'};
+        char[] openChars = { '{', '[' };
+        char[] closeChars = { '}', ']' };
+        char[] openAndClose = { '"' };
         int[] depths = {0, 0};
         int[] values = {0};
         int i = 0;
         // We need a key for each parameter of the object
 
-        if(data.indexOf(":") == -1) {
+        if (data.find(":") == std::string::npos)
             return result;
-        } 
 
-        String currentKey = data.substring(i, data.indexOf(":", i)).trim();
-        currentKey = currentKey.substring(1, currentKey.length() - 1);
+        std::string currentKey = data.substr(i, data.find(":", i) - i);
+
+		// trim currentKey of leading and trailing spaces
+		const auto strBegin = currentKey.find_first_not_of(' ');
+		const auto strEnd = currentKey.find_last_not_of(' ');
+		current_key = currentKey.substr(strBegin, strEnd - strBeign + 1);
+
+
+        //currentKey = currentKey.substr(1, currentKey.length() - 1);
+		currenyKey.erase(0);
+
         // Move i to after key
-        i = data.indexOf(":", i) + 1;
+        i = data.find(":", i) + 1;
         
-        String currentContent = "";
+        std::string currentContent = "";
         Types currentType = Types.NONE;
         for(; i < data.length(); i++) {
             char thisChar = data.charAt(i);
-            if(thisChar == '\\') {
+            if (thisChar == '\\') {
                 i++;
-                if(data.charAt(i) == 'n') currentContent += "\n";
+                if (data.charAt(i) == 'n')
+					currentContent += "\n";
                 else
                     currentContent += data.substring(i, i+1);
-            } else if(includes(openAndClose, thisChar)) {
-                values[getIndex(openAndClose, thisChar)] = 1 - 
-                values[getIndex(openAndClose, thisChar)];
-                if(allZero(depths)) {
-                    if(values[getIndex(openAndClose, thisChar)] == 1) {
+            }
+			else if (includes(openAndClose, thisChar)) {
+                values[getIndex(openAndClose, thisChar)] = 1 - values[getIndex(openAndClose, thisChar)];
+
+                if (allZero(depths)) {
+                    if (values[getIndex(openAndClose, thisChar)] == 1) {
                         currentType = Types.STRING;
                         currentContent = "";
-                    } else {
+                    }
+					else {
                         currentType = Types.NONE;
-                        // Notice this is different since we are using 
-                        // HashMap instead of ArrayList...
-                        result.put(currentKey, new String(currentContent));
+
+                        result[currentKey] = currentContent;
                         currentContent = "";
                     }
-                } else {
+                }
+				else {
                     currentContent += "\"";
                 }
-            } else if (!allZero(values)) {
-                currentContent += data.substring(i, i+1);
-            } else if (includes(openChars,thisChar)) {
-                if(allZero(depths)) {
-                    if(thisChar == '{') currentType = Types.OBJECT;
-                    if(thisChar == '[') currentType = Types.ARRAY;
+            }
+			else if (!allZero(values)) {
+                currentContent += data.substr(i, 1);
+            }
+			else if (includes(openChars,thisChar)) {
+                if (allZero(depths)) {
+                    if (thisChar == '{')
+						currentType = Types.OBJECT;
+                    if (thisChar == '[')
+						currentType = Types.ARRAY;
+					
                     currentContent = "";
-                } else {
-                    currentContent += data.substring(i, i+1);
+                }
+				else {
+                    currentContent += data.substr(i, 1);
                 }
 
                 depths[getIndex(openChars, thisChar)]++;
-            } else if (includes(closeChars,thisChar)) {
+            }
+			else if (includes(closeChars,thisChar)) {
                 depths[getIndex(closeChars, thisChar)]--;
 
                 if(allZero(depths)) {                    
-                    result.put(currentKey, new JSONObject(currentContent.trim(),
-                            currentType));
+                    result[currentKey] = JSONObject(currentContent.trim(), currentType);
                     currentType = Types.NONE;
                     currentContent = "";
                 } else {
