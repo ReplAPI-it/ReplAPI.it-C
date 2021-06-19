@@ -1,0 +1,14 @@
+#IncludeRegexLine: ^[ 	]*[#%][ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+/home/runner/.conan/data/ReplAPI.it/0.1/demo/testing/package/3aa3b410672f2a076c13448160d99998ba9cfe6d/include/ReplAPIit.h
+
+/home/runner/ReplAPIit-C/ReplAPI.it/test_package/example.cpp
+ReplAPIit.h
+/home/runner/ReplAPIit-C/ReplAPI.it/test_package/ReplAPIit.h
+
